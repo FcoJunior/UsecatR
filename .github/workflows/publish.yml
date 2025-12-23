@@ -29,7 +29,8 @@ jobs:
                   dotnet pack -c Release --no-build -o artifacts /p:Version=$VERSION
 
             - name: Push to NuGet
-              run: dotnet nuget push "artifacts/*.nupkg" \
+              run: |
+                  dotnet nuget push "artifacts/*.nupkg" \
                   --api-key "${{ secrets.NUGET_API_KEY }}" \
-                  --source https://api.nuget.org/v3/index.json \
+                  --source "https://api.nuget.org/v3/index.json" \
                   --skip-duplicate
