@@ -31,9 +31,6 @@ jobs:
                     /p:CoverletOutputFormat=cobertura \
                     /p:CoverletOutput=./TestResults/coverage.cobertura.xml
 
-            - name: List coverage files
-              run: ls -la ./TestResults && test -f ./TestResults/coverage.cobertura.xml
-
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v5
               with:
