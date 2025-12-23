@@ -1,0 +1,20 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 0.80 # exemplo: 80%
+        threshold: "0.02" # tolerância
+    patch:
+      default:
+        target: 0.80
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false
+
+ignore:
+  - "**/bin/**"
+  - "**/obj/**"
+  - "**/*.g.cs"
+  - "**/*.Designer.cs"
