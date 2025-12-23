@@ -41,14 +41,14 @@ public sealed class UsecatRTests
     {
         var services = new ServiceCollection();
 
-        services.AddUsecator(typeof(PingHandler).Assembly);
+        services.AddUsecatR(typeof(PingHandler).Assembly);
 
         using var sp = services.BuildServiceProvider();
         using var scope = sp.CreateScope();
 
-        var usecator = scope.ServiceProvider.GetRequiredService<IUsecatR>();
+        var usecatr = scope.ServiceProvider.GetRequiredService<IUsecatR>();
 
-        var result = await usecator.ExecuteAsync<Ping, string>(new Ping("hi"));
+        var result = await usecatr.ExecuteAsync(new Ping("hi"));
 
         Assert.Equal("pong:hi", result);
     }
@@ -59,7 +59,7 @@ public sealed class UsecatRTests
         var events = new List<string>();
         var services = new ServiceCollection();
 
-        services.AddUsecator(typeof(PingHandler).Assembly);
+        services.AddUsecatR(typeof(PingHandler).Assembly);
 
         // Ordem importa: primeiro registrado = mais externo
         services.AddScoped<IUseCaseBehavior<Ping, string>>(_ => new SpyBehavior<Ping, string>(events, "A"));
@@ -68,9 +68,9 @@ public sealed class UsecatRTests
         using var sp = services.BuildServiceProvider();
         using var scope = sp.CreateScope();
 
-        var usecator = scope.ServiceProvider.GetRequiredService<IUsecatR>();
+        var usecatr = scope.ServiceProvider.GetRequiredService<IUsecatR>();
 
-        var result = await usecator.ExecuteAsync<Ping, string>(new Ping("order"));
+        var result = await usecatr.ExecuteAsync(new Ping("order"));
 
         Assert.Equal("pong:order", result);
         Assert.Equal(new[] { "A:before", "B:before", "B:after", "A:after" }, events);
@@ -80,16 +80,16 @@ public sealed class UsecatRTests
     public async Task ExecuteAsync_throws_when_request_is_null()
     {
         var services = new ServiceCollection();
-        services.AddUsecator(typeof(PingHandler).Assembly);
+        services.AddUsecatR(typeof(PingHandler).Assembly);
 
         using var sp = services.BuildServiceProvider();
         using var scope = sp.CreateScope();
 
-        var usecator = scope.ServiceProvider.GetRequiredService<IUsecatR>();
+        var usecatr = scope.ServiceProvider.GetRequiredService<IUsecatR>();
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
-            await usecator.ExecuteAsync<Ping, string>(null!, CancellationToken.None);
+            await usecatr.ExecuteAsync<object>(null!, CancellationToken.None);
         });
     }
 }

@@ -9,20 +9,43 @@ internal sealed class UsecatRBus : IUsecatR
 
     public UsecatRBus(IServiceProvider sp) => _sp = sp;
 
-    public Task<TResult> ExecuteAsync<TRequest, TResult>(TRequest request, CancellationToken ct = default)
-        where TRequest : IUseCaseRequest<TResult>
+    public Task<TResult> ExecuteAsync<TResult>(
+        IUseCaseRequest<TResult> request,
+        CancellationToken ct = default)
     {
         if (request is null) throw new ArgumentNullException(nameof(request));
 
-        var handler = _sp.GetRequiredService<IUseCaseHandler<TRequest, TResult>>();
-        var behaviors = _sp.GetServices<IUseCaseBehavior<TRequest, TResult>>().ToList();
+        var requestType = request.GetType();
 
-        UseCaseHandlerDelegate<TResult> terminal = () => handler.HandleAsync(request, ct);
+        // Resolve handler: IUseCaseHandler<ConcreteRequest, TResult>
+        var handlerContract = typeof(IUseCaseHandler<,>).MakeGenericType(requestType, typeof(TResult));
+        var handler = _sp.GetRequiredService(handlerContract);
 
-        var pipeline = behaviors
-            .Reverse<IUseCaseBehavior<TRequest, TResult>>()
-            .Aggregate(terminal, (next, behavior) => () => behavior.HandleAsync(request, next, ct));
+        var handlerHandleMethod = handlerContract.GetMethod(
+            nameof(IUseCaseHandler<IUseCaseRequest<TResult>, TResult>.HandleAsync))!;
 
-        return pipeline();
+        // Resolve behaviors: IEnumerable<IUseCaseBehavior<ConcreteRequest, TResult>>
+        var behaviorContract = typeof(IUseCaseBehavior<,>).MakeGenericType(requestType, typeof(TResult));
+        var behaviors = _sp.GetServices(behaviorContract).ToList();
+
+        var behaviorHandleMethod = behaviorContract.GetMethod(
+            nameof(IUseCaseBehavior<IUseCaseRequest<TResult>, TResult>.HandleAsync))!;
+
+        // Terminal delegate (handler)
+        UseCaseHandlerDelegate<TResult> next = () =>
+            (Task<TResult>)handlerHandleMethod.Invoke(handler, new object[] { request, ct })!;
+
+        // Pipeline: primeiro registrado = mais externo
+        for (int i = behaviors.Count - 1; i >= 0; i--)
+        {
+            var behavior = behaviors[i];
+            var currentNext = next;
+
+            next = () => (Task<TResult>)behaviorHandleMethod.Invoke(
+                behavior,
+                new object[] { request, currentNext, ct })!;
+        }
+
+        return next();
     }
 }

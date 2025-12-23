@@ -2,6 +2,7 @@ namespace UsecatR.Abstractions;
 
 public interface IUsecatR
 {
-    Task<TResult> ExecuteAsync<TRequest, TResult>(TRequest request, CancellationToken ct = default)
-        where TRequest : IUseCaseRequest<TResult>;
+    Task<TResult> ExecuteAsync<TResult>(
+        IUseCaseRequest<TResult> request,
+        CancellationToken ct = default);
 }

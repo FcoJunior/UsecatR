@@ -7,7 +7,7 @@ namespace UsecatR.DependencyInjection;
 
 public static class UsecatRServiceCollectionExtensions
 {
-    public static IServiceCollection AddUsecator(
+    public static IServiceCollection AddUsecatR(
         this IServiceCollection services,
         params Assembly[] assemblies)
     {
